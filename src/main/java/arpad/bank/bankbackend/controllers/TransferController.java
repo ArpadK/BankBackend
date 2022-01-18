@@ -19,11 +19,17 @@ public class TransferController {
 	}
 
 	@PostMapping("/newTransfer")
-	public void newTransfer(@RequestBody TransferRequest transferRequest) {
+	public String newTransfer(@RequestBody TransferRequest transferRequest) {
 		log.info("Received transfer request from " + transferRequest.getFromRekeningNummer() + " to " + transferRequest.getToRekeningNummer());
 		// TODO: Input validation
 		// TODO: Check if fromRekening is Owned by signed in user
-		newTransferHandler.handleNewTransfer(transferRequest.getFromRekeningNummer(), transferRequest.getToRekeningNummer(), transferRequest.getAmount(), TypeOfMutatie.AF);
+		boolean transferSuccessful = newTransferHandler.handleNewTransfer(transferRequest.getFromRekeningNummer(), transferRequest.getToRekeningNummer(), transferRequest.getAmount(), TypeOfMutatie.AF);
 		// TODO: Return Succes or Failure
+
+		if(transferSuccessful){
+			return "The transfer was successfully submitted";
+		}else{
+			return "Could not transfer the money. Please contact your bank";
+		}
 	}
 }
