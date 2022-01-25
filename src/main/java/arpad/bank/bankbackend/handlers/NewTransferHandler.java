@@ -6,6 +6,8 @@ import arpad.bank.bankbackend.dbmodel.RekeningMutatie;
 import arpad.bank.bankbackend.dbmodel.TypeOfMutatie;
 import arpad.bank.bankbackend.helpers.RekeningNummerHelper;
 import arpad.bank.bankbackend.integration.eventstore.EventStoreClient;
+import arpad.bank.bankbackend.integration.eventstore.PublishEventClient;
+import arpad.bank.bankbackend.integration.eventstore.eventstoreDTOs.TransferCreatedEvent;
 import arpad.bank.bankbackend.integration.external.exchange.TransferRabbitMQClient;
 import arpad.bank.bankbackend.integration.external.exchange.externalExchangeDTOs.TransferRequest;
 import arpad.bank.bankbackend.repository.RekeningMutatieRepository;
@@ -15,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Component
 @Slf4j
@@ -26,6 +29,8 @@ public class NewTransferHandler {
 	private RekeningNummerHelper rekeningNummerHelper;
 	private IncommingTransferHandler incommingTransferHandler;
 	private EventStoreClient eventStoreClient;
+	private PublishEventClient publishEventClient;
+
 
 	/**
 	 * start a new transfer
@@ -45,28 +50,40 @@ public class NewTransferHandler {
 			return false;
 		}
 
-		rekening.updateSaldo(typeOfMutatie, amount);
+		String transferNumber = rekeningNummerHelper.generateNewTransferNumber();
 
-		RekeningMutatie newRekeningMutatie = new RekeningMutatie(tegenRekeningNummer, typeOfMutatie,amount, rekening, MutatieStatus.Pending);
+		TransferCreatedEvent transferCreatedEvent = new TransferCreatedEvent(
+				transferNumber,
+				rekeningNummer,
+				tegenRekeningNummer,
+				amount,
+				typeOfMutatie
+		);
+
+		publishEventClient.registerNewTransferEvent(transferCreatedEvent);
+
+		log.info("Checking if it is an Internal transfer");
+//		if(isInternalTransaction){
+//			log.info("Transfering money to an internal bankaccount");
+//			handleInternalTransfer(rekeningNummer, tegenRekeningNummer, amount, typeOfMutatie, transferNumber);
+//		}else{
+//			log.info("Transfering money to an external bankaccount");
+//			handleExternalTransfer(transferNumber);
+//		}
+		return true;
+	}
+
+	public void handleNewTransferEvent(TransferCreatedEvent transferCreatedEvent){
+		Rekening rekening = rekeningRepository.getRekeningByRekeningNummer(transferCreatedEvent.getRekeningNummer());
+
+		rekening.updateSaldo(transferCreatedEvent.getTypeOfMutatie(), transferCreatedEvent.getAmount());
+
+		RekeningMutatie newRekeningMutatie = new RekeningMutatie(transferCreatedEvent.getTransferNumber(), transferCreatedEvent.getTegenRekeningNummer(), transferCreatedEvent.getTypeOfMutatie(),transferCreatedEvent.getAmount(), rekening, MutatieStatus.Pending);
 		rekening.addRekeningMutatie(newRekeningMutatie);
 
-		eventStoreClient.registerNewTransferEvent();
 		rekeningMutatieRepository.save(newRekeningMutatie);
 		rekeningRepository.save(rekening);
 		rekeningRepository.flush();
-
-		log.info("Checking if it is an Internal transfer");
-		String transferNumber = rekeningNummerHelper.mapRekeningMutatieIdToTransferNumber(newRekeningMutatie.getId());
-		boolean transferResult;
-		if(isInternalTransaction){
-			log.info("Transfering money to an internal bankaccount");
-			transferResult = handleInternalTransfer(rekeningNummer, tegenRekeningNummer, amount, typeOfMutatie, transferNumber);
-		}else{
-			log.info("Transfering money to an external bankaccount");
-			transferResult = handleExternalTransfer(transferNumber);
-		}
-
-		return transferResult;
 	}
 
 	/**
@@ -77,13 +94,13 @@ public class NewTransferHandler {
 	public void handleExternalTransferResponse(String transferNumber, boolean transferSuccessful){
 		String rekeningMutatieId = transferNumber;
 		//TODO: null check on rekeningMutatie
-		RekeningMutatie rekeningMutatie = rekeningMutatieRepository.findById(rekeningNummerHelper.mapTransferNumberToRekeningMutatieId(transferNumber)).get();
+		RekeningMutatie rekeningMutatie = rekeningMutatieRepository.getRekeningMutatieByTransferNumber(transferNumber);
 		if(transferSuccessful){
-			eventStoreClient.registerTransferCompletedEvent();
+			publishEventClient.registerTransferCompletedEvent();
 			rekeningMutatie.finalizeMutation();
 			rekeningMutatieRepository.save(rekeningMutatie);
 		}else{
-			eventStoreClient.registerTransferCancelledEvent();
+			publishEventClient.registerTransferCancelledEvent();
 			rekeningMutatie.cancelMutation();
 			rekeningMutatieRepository.save(rekeningMutatie);
 		}
@@ -103,15 +120,15 @@ public class NewTransferHandler {
 		log.info("Since this is an internal transaction, transfer money synchronously");
 		boolean transferSuccessful = incommingTransferHandler.handleIncomingTransfer(tegenRekeningNummer, rekeningnummer, amount, typeOfMutatie.inverted());
 
-		RekeningMutatie rekeningMutatie = rekeningMutatieRepository.findById(rekeningNummerHelper.mapTransferNumberToRekeningMutatieId(transferNumber)).get();
+		RekeningMutatie rekeningMutatie = rekeningMutatieRepository.getRekeningMutatieByTransferNumber(transferNumber);
 
 		if(transferSuccessful){
-			eventStoreClient.registerTransferCompletedEvent();
+			publishEventClient.registerTransferCompletedEvent();
 			log.info("Internal transfer successful, Regestering transaction");
 			finalizeTransaction(rekeningMutatie);
 			return true;
 		}else{
-			eventStoreClient.registerTransferCancelledEvent();
+			publishEventClient.registerTransferCancelledEvent();
 			log.info("Internal transfer unsuccessful, rollbacking transaction");
 			rollbackTransaction(rekeningMutatie);
 			return false;
@@ -119,7 +136,7 @@ public class NewTransferHandler {
 	}
 
 	/**
-	 * Handle an internal transaction. This will be done asynchronously.
+	 * Handle an external transaction. This will be done asynchronously.
 	 * @param transferNumber The transferNumber of this transaction
 	 * @return A boolean indicating if the transfer was successfully posted on the interBank exchange
 	 */
@@ -133,7 +150,7 @@ public class NewTransferHandler {
 			log.info("Transaction successfully send to external bank");
 		}else{
 			log.info("Transaction could not be send to the external bank, cancelling transaction");
-			RekeningMutatie rekeningMutatie = rekeningMutatieRepository.findById(rekeningNummerHelper.mapTransferNumberToRekeningMutatieId(transferNumber)).get();
+			RekeningMutatie rekeningMutatie = rekeningMutatieRepository.getRekeningMutatieByTransferNumber(transferNumber);
 			rollbackTransaction(rekeningMutatie);
 		}
 

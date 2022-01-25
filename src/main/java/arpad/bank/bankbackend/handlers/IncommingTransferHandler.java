@@ -41,8 +41,8 @@ public class IncommingTransferHandler {
 		RekeningMutatie newRekeningMutatie = new RekeningMutatie(tegenRekeningNummer, typeOfMutatie,amount, rekening, MutatieStatus.Completed);
 		rekening.addRekeningMutatie(newRekeningMutatie);
 
-		eventStoreClient.registerNewTransferEvent();
-		eventStoreClient.registerTransferCompletedEvent();
+//		eventStoreClient.registerNewTransferEvent();
+//		eventStoreClient.registerTransferCompletedEvent();
 		rekeningMutatieRepository.save(newRekeningMutatie);
 		rekeningRepository.save(rekening);
 		rekeningRepository.flush();

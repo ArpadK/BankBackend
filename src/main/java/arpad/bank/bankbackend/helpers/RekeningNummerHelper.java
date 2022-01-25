@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,22 +32,12 @@ public class RekeningNummerHelper {
 	}
 
 	/**
-	 * Map the transfercode to the internal RekeningMutatieId
-	 * @param TransferNumber A transferNumber
-	 * @return The RekeningMutatieId of the TransferNumber
-	 */
-	//TODO: add bankname to the transferNumber
-	public Long mapTransferNumberToRekeningMutatieId(String TransferNumber){
-		return Long.parseLong(TransferNumber);
-	}
-
-	/**
 	 * Map the RekeningMutatieId to the external transferNumber
 	 * @param rekeningMutatieId A RekeningMutatieId
 	 * @return The transferNumber of the RekeningMutatieId
 	 */
 	//TODO: add bankname to the transferNumber
-	public String mapRekeningMutatieIdToTransferNumber(Long rekeningMutatieId){
-		return rekeningMutatieId.toString();
+	public String generateNewTransferNumber(){
+		return bankname + "_" + UUID.randomUUID().toString();
 	}
 }

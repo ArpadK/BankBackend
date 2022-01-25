@@ -17,6 +17,10 @@ public class RekeningMutatie {
 	@Getter @Setter
 	protected Long id;
 
+	@Column
+	@Getter @Setter
+	protected String transferNumber;
+
 	@ManyToOne
 	@JoinColumn(name="rekening")
 	@Getter @Setter
@@ -52,7 +56,8 @@ public class RekeningMutatie {
 	@Getter @Setter
 	protected Timestamp lastUpdateMutatieStatus;
 
-	public RekeningMutatie(String tegenRekeningNummer, TypeOfMutatie typeOfMutatie, BigDecimal amount, Rekening rekening, MutatieStatus mutatieStatus){
+	public RekeningMutatie(String transferNumber, String tegenRekeningNummer, TypeOfMutatie typeOfMutatie, BigDecimal amount, Rekening rekening, MutatieStatus mutatieStatus){
+		this.transferNumber = transferNumber;
 		this.tegenRekeningNummer = tegenRekeningNummer;
 		this.typeOfMutatie = typeOfMutatie;
 		this.amount = amount;

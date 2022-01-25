@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 public class TransferController {
 
-	NewTransferHandler newTransferHandler;
+	private NewTransferHandler newTransferHandler;
 
 	public TransferController(NewTransferHandler newTransferHandler){
 		this.newTransferHandler = newTransferHandler;
