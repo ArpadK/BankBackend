@@ -10,7 +10,8 @@ import java.math.BigDecimal;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class TransferCreatedEvent {
+public class TransferEvent {
+	private TransferEventType transferEventType;
 	private String transferNumber;
 	private String rekeningNummer;
 	private String tegenRekeningNummer;

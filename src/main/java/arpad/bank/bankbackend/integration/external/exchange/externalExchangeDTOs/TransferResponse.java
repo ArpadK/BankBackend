@@ -1,15 +1,18 @@
 package arpad.bank.bankbackend.integration.external.exchange.externalExchangeDTOs;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
+import arpad.bank.bankbackend.dbmodel.TypeOfMutatie;
+import lombok.*;
 
-@AllArgsConstructor
+import java.math.BigDecimal;
+
+@NoArgsConstructor
+@Data
 public class TransferResponse {
-	@Getter @Setter
 	private String transferNumber;
-	@Getter @Setter
 	private boolean transferSuccessful;
-	@Getter @Setter
 	private String transferNonSuccessfulReason;
+	private String rekeningnummer;
+	private String tegenRekeningNummer;
+	private BigDecimal amount;
+	private TypeOfMutatie typeOfMutatie;
 }

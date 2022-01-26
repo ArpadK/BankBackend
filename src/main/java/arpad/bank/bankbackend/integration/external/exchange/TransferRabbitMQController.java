@@ -15,6 +15,12 @@ public class TransferRabbitMQController {
 
 	public void processTranferResponse(TransferResponse transferResponse){
 		log.info("received a transferResponce for transaction " + transferResponse.getTransferNumber());
-		newTransferHandler.handleExternalTransferResponse(transferResponse.getTransferNumber(), transferResponse.isTransferSuccessful());
+		newTransferHandler.handleExternalTransferResponse(
+				transferResponse.getTransferNumber(),
+				transferResponse.getRekeningnummer(),
+				transferResponse.getTegenRekeningNummer(),
+				transferResponse.getAmount(),
+				transferResponse.getTypeOfMutatie(),
+				transferResponse.isTransferSuccessful());
 	}
 }

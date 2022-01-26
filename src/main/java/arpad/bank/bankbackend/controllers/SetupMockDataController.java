@@ -3,7 +3,6 @@ package arpad.bank.bankbackend.controllers;
 import arpad.bank.bankbackend.dbmodel.*;
 import arpad.bank.bankbackend.handlers.NewTransferHandler;
 import arpad.bank.bankbackend.integration.external.exchange.TransferRabbitMQController;
-import arpad.bank.bankbackend.integration.external.exchange.externalExchangeDTOs.TransferResponse;
 import arpad.bank.bankbackend.repository.KlantRepository;
 import arpad.bank.bankbackend.repository.RekeningRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -64,7 +63,7 @@ public class SetupMockDataController {
 	@GetMapping("/tempRespondToRabbitRequest")
 	public void tempRespondToRabbitRequest(){
 		TransferRabbitMQController transferRabbitMQController = new TransferRabbitMQController(newTransferHandler);
-		TransferResponse transferResponse = new TransferResponse("1", true, null);
-		transferRabbitMQController.processTranferResponse(transferResponse);
+//		TransferResponse transferResponse = new TransferResponse("1", true, null);
+//		transferRabbitMQController.processTranferResponse(transferResponse);
 	}
 }

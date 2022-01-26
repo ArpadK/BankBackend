@@ -1,13 +1,10 @@
 package arpad.bank.bankbackend.integration.eventstore;
 
-import arpad.bank.bankbackend.handlers.NewTransferHandler;
-import arpad.bank.bankbackend.integration.eventstore.eventstoreDTOs.TransferCreatedEvent;
+import arpad.bank.bankbackend.handlers.TransferEventHandler;
+import arpad.bank.bankbackend.integration.eventstore.eventstoreDTOs.TransferEvent;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.annotation.EnableRabbit;
-import org.springframework.amqp.rabbit.annotation.RabbitHandler;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 
 import javax.transaction.Transactional;
@@ -17,19 +14,19 @@ import javax.transaction.Transactional;
 public class ReceiveEventClient {
 
 	private RabbitTemplate template;
-	private NewTransferHandler newTransferHandler;
+	private TransferEventHandler transferEventHandler;
 
-	public ReceiveEventClient(RabbitTemplate rabbitTemplate, NewTransferHandler newTransferHandler){
+	public ReceiveEventClient(RabbitTemplate rabbitTemplate, TransferEventHandler newTransferHandler){
 		this.template = rabbitTemplate;
-		this.newTransferHandler = newTransferHandler;
+		this.transferEventHandler = newTransferHandler;
 	}
 
 	@Transactional
 	@RabbitListener(queues = "${bank.transfer.queue.name}")
-	public void receiveNewTransferEvent(TransferCreatedEvent transferCreatedEvent){
+	public void receiveNewTransferEvent(TransferEvent transferEvent){
 		log.info("TransferCreatedEvent received. Updating model");
 		try{
-			newTransferHandler.handleNewTransferEvent(transferCreatedEvent);
+			transferEventHandler.handleNewTransferEvent(transferEvent);
 		}catch(Exception e){
 			log.error("could not process event", e);
 		}
