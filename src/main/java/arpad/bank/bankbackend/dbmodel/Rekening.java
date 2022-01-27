@@ -1,5 +1,6 @@
 package arpad.bank.bankbackend.dbmodel;
 
+import arpad.bank.bankbackend.exceptions.TransferIllegalException;
 import arpad.bank.bankbackend.repository.RekeningRepository;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -44,9 +45,8 @@ public abstract class Rekening {
 	 * @param amount the amount you want to transfer
 	 * @param typeOfMutatie specify if you are depositing or withdrawing from this account.
 	 * @param rekeningRepository an instance of the rekeningRepository
-	 * @return a boolean indicating if the transfer is legal.
 	 */
-	public abstract boolean checkIfTransferIsLegal(boolean internalTransfer,String tegenRekeningNummer, BigDecimal amount, TypeOfMutatie typeOfMutatie, RekeningRepository rekeningRepository);
+	public abstract void checkIfTransferIsLegal(boolean internalTransfer,String tegenRekeningNummer, BigDecimal amount, TypeOfMutatie typeOfMutatie, RekeningRepository rekeningRepository) throws TransferIllegalException;
 
 	/**
 	 * Updates the saldo of this rekening with the amount specified

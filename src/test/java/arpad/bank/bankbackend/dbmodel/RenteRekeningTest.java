@@ -1,5 +1,6 @@
 package arpad.bank.bankbackend.dbmodel;
 
+import arpad.bank.bankbackend.exceptions.TransferIllegalException;
 import arpad.bank.bankbackend.repository.KlantRepository;
 import arpad.bank.bankbackend.repository.RekeningRepository;
 import org.junit.jupiter.api.BeforeAll;
@@ -11,6 +12,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.math.BigDecimal;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -79,11 +82,10 @@ public class RenteRekeningTest {
 		boolean internaltransfer = true;
 		TypeOfMutatie typeOfMutatie = TypeOfMutatie.AF;
 
-		// Act
-		boolean result = renteRekeningParticulier.checkIfTransferIsLegal(internaltransfer, eigenTegenRekeningParticulier.getRekeningnummer(), transferAmount, typeOfMutatie, rekeningRepository);
+		// Act & Assert
+		assertDoesNotThrow(() ->
+				renteRekeningParticulier.checkIfTransferIsLegal(internaltransfer, eigenTegenRekeningParticulier.getRekeningnummer(), transferAmount, typeOfMutatie, rekeningRepository));
 
-		// Assert
-		assertThat(result).isTrue();
 	}
 
 	@Test
@@ -93,11 +95,10 @@ public class RenteRekeningTest {
 		boolean internaltransfer = true;
 		TypeOfMutatie typeOfMutatie = TypeOfMutatie.AF;
 
-		// Act
-		boolean result = renteRekeningParticulier.checkIfTransferIsLegal(internaltransfer, eigenTegenRekeningParticulier.getRekeningnummer(), transferAmount, typeOfMutatie, rekeningRepository);
+		// Act & Assert
+		assertDoesNotThrow(() ->
+				renteRekeningParticulier.checkIfTransferIsLegal(internaltransfer, eigenTegenRekeningParticulier.getRekeningnummer(), transferAmount, typeOfMutatie, rekeningRepository));
 
-		// Assert
-		assertThat(result).isTrue();
 	}
 
 	@Test
@@ -107,11 +108,10 @@ public class RenteRekeningTest {
 		boolean internaltransfer = true;
 		TypeOfMutatie typeOfMutatie = TypeOfMutatie.AF;
 
-		// Act
-		boolean result = renteRekeningParticulier.checkIfTransferIsLegal(internaltransfer, eigenTegenRekeningParticulier.getRekeningnummer(), transferAmount, typeOfMutatie, rekeningRepository);
-
-		// Assert
-		assertThat(result).isFalse();
+		// Act & Assert
+		assertThrows(TransferIllegalException.class, () -> {
+					renteRekeningParticulier.checkIfTransferIsLegal(internaltransfer, eigenTegenRekeningParticulier.getRekeningnummer(), transferAmount, typeOfMutatie, rekeningRepository);
+				});
 	}
 
 	@Test
@@ -121,11 +121,10 @@ public class RenteRekeningTest {
 		boolean internaltransfer = true;
 		TypeOfMutatie typeOfMutatie = TypeOfMutatie.AF;
 
-		// Act
-		boolean result = renteRekeningZakelijk.checkIfTransferIsLegal(internaltransfer, eigenTegenRekeningZaklelijk.getRekeningnummer(), transferAmount, typeOfMutatie, rekeningRepository);
+		// Act & Assert
+		assertDoesNotThrow(() ->
+				renteRekeningZakelijk.checkIfTransferIsLegal(internaltransfer, eigenTegenRekeningZaklelijk.getRekeningnummer(), transferAmount, typeOfMutatie, rekeningRepository));
 
-		// Assert
-		assertThat(result).isTrue();
 	}
 
 	@Test
@@ -135,11 +134,9 @@ public class RenteRekeningTest {
 		boolean internaltransfer = true;
 		TypeOfMutatie typeOfMutatie = TypeOfMutatie.AF;
 
-		// Act
-		boolean result = renteRekeningZakelijk.checkIfTransferIsLegal(internaltransfer, eigenTegenRekeningZaklelijk.getRekeningnummer(), transferAmount, typeOfMutatie, rekeningRepository);
-
-		// Assert
-		assertThat(result).isTrue();
+		// Act & Assert
+		assertDoesNotThrow(() ->
+				renteRekeningZakelijk.checkIfTransferIsLegal(internaltransfer, eigenTegenRekeningZaklelijk.getRekeningnummer(), transferAmount, typeOfMutatie, rekeningRepository));
 	}
 
 	@Test
@@ -149,11 +146,10 @@ public class RenteRekeningTest {
 		boolean internaltransfer = true;
 		TypeOfMutatie typeOfMutatie = TypeOfMutatie.AF;
 
-		// Act
-		boolean result = renteRekeningZakelijk.checkIfTransferIsLegal(internaltransfer, eigenTegenRekeningZaklelijk.getRekeningnummer(), transferAmount, typeOfMutatie, rekeningRepository);
-
-		// Assert
-		assertThat(result).isFalse();
+		// Act & Assert
+		assertThrows(TransferIllegalException.class, () -> {
+			renteRekeningZakelijk.checkIfTransferIsLegal(internaltransfer, eigenTegenRekeningZaklelijk.getRekeningnummer(), transferAmount, typeOfMutatie, rekeningRepository);
+		});
 	}
 
 	@Test
@@ -163,11 +159,10 @@ public class RenteRekeningTest {
 		boolean internaltransfer = true;
 		TypeOfMutatie typeOfMutatie = TypeOfMutatie.AF;
 
-		// Act
-		boolean result = renteRekeningParticulier.checkIfTransferIsLegal(internaltransfer, andereTegenRekening.getRekeningnummer(), transferAmount, typeOfMutatie, rekeningRepository);
-
-		// Assert
-		assertThat(result).isFalse();
+		// Act & Assert
+		assertThrows(TransferIllegalException.class, () -> {
+			renteRekeningParticulier.checkIfTransferIsLegal(internaltransfer, andereTegenRekening.getRekeningnummer(), transferAmount, typeOfMutatie, rekeningRepository);
+		});
 	}
 
 	@Test
@@ -177,11 +172,10 @@ public class RenteRekeningTest {
 		boolean internaltransfer = true;
 		TypeOfMutatie typeOfMutatie = TypeOfMutatie.AF;
 
-		// Act
-		boolean result = renteRekeningZakelijk.checkIfTransferIsLegal(internaltransfer, andereTegenRekening.getRekeningnummer(), transferAmount, typeOfMutatie, rekeningRepository);
-
-		// Assert
-		assertThat(result).isFalse();
+		// Act & Assert
+		assertThrows(TransferIllegalException.class, () -> {
+			renteRekeningZakelijk.checkIfTransferIsLegal(internaltransfer, andereTegenRekening.getRekeningnummer(), transferAmount, typeOfMutatie, rekeningRepository);
+		});
 	}
 
 	@Test
@@ -191,11 +185,10 @@ public class RenteRekeningTest {
 		boolean internaltransfer = true;
 		TypeOfMutatie typeOfMutatie = TypeOfMutatie.BIJ;
 
-		// Act
-		boolean result = renteRekeningParticulier.checkIfTransferIsLegal(internaltransfer, eigenTegenRekeningParticulier.getRekeningnummer(), transferAmount, typeOfMutatie, rekeningRepository);
-
-		// Assert
-		assertThat(result).isFalse();
+		// Act & Assert
+		assertThrows(TransferIllegalException.class, () -> {
+			renteRekeningParticulier.checkIfTransferIsLegal(internaltransfer, eigenTegenRekeningParticulier.getRekeningnummer(), transferAmount, typeOfMutatie, rekeningRepository);
+		});
 	}
 
 	@Test
@@ -205,11 +198,10 @@ public class RenteRekeningTest {
 		boolean internaltransfer = true;
 		TypeOfMutatie typeOfMutatie = TypeOfMutatie.BIJ;
 
-		// Act
-		boolean result = renteRekeningZakelijk.checkIfTransferIsLegal(internaltransfer, eigenTegenRekeningZaklelijk.getRekeningnummer(), transferAmount, typeOfMutatie, rekeningRepository);
-
-		// Assert
-		assertThat(result).isFalse();
+		// Act & Assert
+		assertThrows(TransferIllegalException.class, () -> {
+			renteRekeningZakelijk.checkIfTransferIsLegal(internaltransfer, eigenTegenRekeningZaklelijk.getRekeningnummer(), transferAmount, typeOfMutatie, rekeningRepository);
+		});
 	}
 
 	@Test
@@ -219,11 +211,10 @@ public class RenteRekeningTest {
 		boolean internaltransfer = true;
 		TypeOfMutatie typeOfMutatie = TypeOfMutatie.BIJ;
 
-		// Act
-		boolean result = renteRekeningParticulier.checkIfTransferIsLegal(internaltransfer, andereTegenRekening.getRekeningnummer(), transferAmount, typeOfMutatie, rekeningRepository);
-
-		// Assert
-		assertThat(result).isFalse();
+		// Act & Assert
+		assertThrows(TransferIllegalException.class, () -> {
+			renteRekeningParticulier.checkIfTransferIsLegal(internaltransfer, andereTegenRekening.getRekeningnummer(), transferAmount, typeOfMutatie, rekeningRepository);
+		});
 	}
 
 	@Test
@@ -233,10 +224,9 @@ public class RenteRekeningTest {
 		boolean internaltransfer = true;
 		TypeOfMutatie typeOfMutatie = TypeOfMutatie.BIJ;
 
-		// Act
-		boolean result = renteRekeningZakelijk.checkIfTransferIsLegal(internaltransfer, andereTegenRekening.getRekeningnummer(), transferAmount, typeOfMutatie, rekeningRepository);
-
-		// Assert
-		assertThat(result).isFalse();
+		// Act & Assert
+		assertThrows(TransferIllegalException.class, () -> {
+			renteRekeningZakelijk.checkIfTransferIsLegal(internaltransfer, andereTegenRekening.getRekeningnummer(), transferAmount, typeOfMutatie, rekeningRepository);
+		});
 	}
 }

@@ -4,6 +4,7 @@ import arpad.bank.bankbackend.dbmodel.MutatieStatus;
 import arpad.bank.bankbackend.dbmodel.Rekening;
 import arpad.bank.bankbackend.dbmodel.RekeningMutatie;
 import arpad.bank.bankbackend.dbmodel.TypeOfMutatie;
+import arpad.bank.bankbackend.exceptions.TransferIllegalException;
 import arpad.bank.bankbackend.integration.eventstore.PublishEventClient;
 import arpad.bank.bankbackend.integration.eventstore.eventstoreDTOs.TransferEvent;
 import arpad.bank.bankbackend.integration.eventstore.eventstoreDTOs.TransferEventType;
@@ -29,14 +30,10 @@ public class IncommingTransferHandler {
 	 * @param tegenRekeningNummer   The rekeningNummer of the account that started this transfer
 	 * @param amount                The amount you want to transfer
 	 * @param typeOfMutatie         Specify if you want to add or remove money
-	 * @return  a boolean indicating if the transfer was successful
 	 */
-	public boolean handleIncomingTransfer(String transferNumber, String rekeningNummer, String tegenRekeningNummer, BigDecimal amount, TypeOfMutatie typeOfMutatie){
+	public void handleIncomingTransfer(String transferNumber, String rekeningNummer, String tegenRekeningNummer, BigDecimal amount, TypeOfMutatie typeOfMutatie) throws TransferIllegalException {
 		Rekening rekening = rekeningRepository.getRekeningByRekeningNummer(rekeningNummer);
-		if(!rekening.checkIfTransferIsLegal(true, tegenRekeningNummer, amount, typeOfMutatie, rekeningRepository)){
-			log.info("Transfer is illegal, canceling transfer");
-			return false;
-		}
+		rekening.checkIfTransferIsLegal(true, tegenRekeningNummer, amount, typeOfMutatie, rekeningRepository);
 
 		TransferEvent transferEvent = new TransferEvent(
 				TransferEventType.CREATED,
@@ -60,7 +57,5 @@ public class IncommingTransferHandler {
 		);
 
 		publishEventClient.registerNewTransferEvent(transferCompletedEvent);
-
-		return true;
 	}
 }

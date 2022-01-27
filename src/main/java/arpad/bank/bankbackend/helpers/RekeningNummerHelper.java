@@ -33,7 +33,6 @@ public class RekeningNummerHelper {
 
 	/**
 	 * Map the RekeningMutatieId to the external transferNumber
-	 * @param rekeningMutatieId A RekeningMutatieId
 	 * @return The transferNumber of the RekeningMutatieId
 	 */
 	//TODO: add bankname to the transferNumber

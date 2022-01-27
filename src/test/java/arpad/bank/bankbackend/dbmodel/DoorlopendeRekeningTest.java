@@ -1,5 +1,6 @@
 package arpad.bank.bankbackend.dbmodel;
 
+import arpad.bank.bankbackend.exceptions.TransferIllegalException;
 import arpad.bank.bankbackend.repository.KlantRepository;
 import arpad.bank.bankbackend.repository.RekeningRepository;
 import org.junit.jupiter.api.BeforeAll;
@@ -11,6 +12,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.math.BigDecimal;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -66,11 +69,10 @@ public class DoorlopendeRekeningTest {
 		boolean internaltransfer = true;
 		TypeOfMutatie typeOfMutatie = TypeOfMutatie.AF;
 
-		// Act
-		boolean result = doorlopendeRekeningParticulier.checkIfTransferIsLegal(internaltransfer, tegenRekening.getRekeningnummer(), transferAmount, typeOfMutatie, rekeningRepository);
+		// Act & Assert
+		assertDoesNotThrow(() ->
+				doorlopendeRekeningParticulier.checkIfTransferIsLegal(internaltransfer, tegenRekening.getRekeningnummer(), transferAmount, typeOfMutatie, rekeningRepository));
 
-		// Assert
-		assertThat(result).isTrue();
 	}
 
 	@Test
@@ -80,11 +82,9 @@ public class DoorlopendeRekeningTest {
 		boolean internaltransfer = true;
 		TypeOfMutatie typeOfMutatie = TypeOfMutatie.AF;
 
-		// Act
-		boolean result = doorlopendeRekeningParticulier.checkIfTransferIsLegal(internaltransfer, tegenRekening.getRekeningnummer(), transferAmount, typeOfMutatie, rekeningRepository);
-
-		// Assert
-		assertThat(result).isTrue();
+		// Act & Assert
+		assertDoesNotThrow(() ->
+				doorlopendeRekeningParticulier.checkIfTransferIsLegal(internaltransfer, tegenRekening.getRekeningnummer(), transferAmount, typeOfMutatie, rekeningRepository));
 	}
 
 	@Test
@@ -94,11 +94,10 @@ public class DoorlopendeRekeningTest {
 		boolean internaltransfer = true;
 		TypeOfMutatie typeOfMutatie = TypeOfMutatie.AF;
 
-		// Act
-		boolean result = doorlopendeRekeningParticulier.checkIfTransferIsLegal(internaltransfer, tegenRekening.getRekeningnummer(), transferAmount, typeOfMutatie, rekeningRepository);
-
-		// Assert
-		assertThat(result).isFalse();
+		// Act & Assert
+		assertThrows(TransferIllegalException.class, () -> {
+			doorlopendeRekeningParticulier.checkIfTransferIsLegal(internaltransfer, tegenRekening.getRekeningnummer(), transferAmount, typeOfMutatie, rekeningRepository);
+		});
 	}
 
 	@Test
@@ -108,11 +107,10 @@ public class DoorlopendeRekeningTest {
 		boolean internaltransfer = true;
 		TypeOfMutatie typeOfMutatie = TypeOfMutatie.AF;
 
-		// Act
-		boolean result = doorlopendeRekeningZakelijk.checkIfTransferIsLegal(internaltransfer, tegenRekening.getRekeningnummer(), transferAmount, typeOfMutatie, rekeningRepository);
+		// Act & Assert
+		assertDoesNotThrow(() ->
+				doorlopendeRekeningZakelijk.checkIfTransferIsLegal(internaltransfer, tegenRekening.getRekeningnummer(), transferAmount, typeOfMutatie, rekeningRepository));
 
-		// Assert
-		assertThat(result).isTrue();
 	}
 
 	@Test
@@ -122,11 +120,10 @@ public class DoorlopendeRekeningTest {
 		boolean internaltransfer = true;
 		TypeOfMutatie typeOfMutatie = TypeOfMutatie.AF;
 
-		// Act
-		boolean result = doorlopendeRekeningZakelijk.checkIfTransferIsLegal(internaltransfer, tegenRekening.getRekeningnummer(), transferAmount, typeOfMutatie, rekeningRepository);
+		// Act & Assert
+		assertDoesNotThrow(() ->
+				doorlopendeRekeningZakelijk.checkIfTransferIsLegal(internaltransfer, tegenRekening.getRekeningnummer(), transferAmount, typeOfMutatie, rekeningRepository));
 
-		// Assert
-		assertThat(result).isTrue();
 	}
 
 	@Test
@@ -136,10 +133,9 @@ public class DoorlopendeRekeningTest {
 		boolean internaltransfer = true;
 		TypeOfMutatie typeOfMutatie = TypeOfMutatie.AF;
 
-		// Act
-		boolean result = doorlopendeRekeningZakelijk.checkIfTransferIsLegal(internaltransfer, tegenRekening.getRekeningnummer(), transferAmount, typeOfMutatie, rekeningRepository);
-
-		// Assert
-		assertThat(result).isFalse();
+		// Act & Assert
+		assertThrows(TransferIllegalException.class, () -> {
+			doorlopendeRekeningZakelijk.checkIfTransferIsLegal(internaltransfer, tegenRekening.getRekeningnummer(), transferAmount, typeOfMutatie, rekeningRepository);
+		});
 	}
 }

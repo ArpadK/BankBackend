@@ -2,12 +2,14 @@ package arpad.bank.bankbackend.handlers;
 
 import arpad.bank.bankbackend.dbmodel.Rekening;
 import arpad.bank.bankbackend.dbmodel.TypeOfMutatie;
+import arpad.bank.bankbackend.exceptions.TransferIllegalException;
 import arpad.bank.bankbackend.helpers.RekeningNummerHelper;
 import arpad.bank.bankbackend.integration.eventstore.PublishEventClient;
 import arpad.bank.bankbackend.integration.eventstore.eventstoreDTOs.TransferEvent;
 import arpad.bank.bankbackend.integration.eventstore.eventstoreDTOs.TransferEventType;
 import arpad.bank.bankbackend.integration.external.exchange.TransferRabbitMQClient;
 import arpad.bank.bankbackend.integration.external.exchange.externalExchangeDTOs.TransferRequest;
+import arpad.bank.bankbackend.integration.external.exchange.externalExchangeDTOs.TransferResponse;
 import arpad.bank.bankbackend.repository.RekeningRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,15 +36,14 @@ public class NewTransferHandler {
 	 * @param typeOfMutatie indicate if you want to add or remove money from the rekeningNummer
 	 * @return a boolean indicating if the transaction was successful
 	 */
-	public boolean handleNewTransfer(String rekeningNummer, String tegenRekeningNummer, BigDecimal amount, TypeOfMutatie typeOfMutatie){
+	public void handleNewTransfer(String rekeningNummer, String tegenRekeningNummer, BigDecimal amount, TypeOfMutatie typeOfMutatie) throws TransferIllegalException {
 		boolean isInternalTransaction = rekeningNummerHelper.isBankRekeningInternalRekening(tegenRekeningNummer);
 
 		// get the Rekening that is starting this transfer from the database
 		Rekening rekening = rekeningRepository.getRekeningByRekeningNummer(rekeningNummer);
+
 		// check if Tranfer is legal
-		if(!rekening.checkIfTransferIsLegal(true, tegenRekeningNummer, amount, typeOfMutatie, rekeningRepository)){
-			return false;
-		}
+		rekening.checkIfTransferIsLegal(true, tegenRekeningNummer, amount, typeOfMutatie, rekeningRepository);
 
 		String transferNumber = rekeningNummerHelper.generateNewTransferNumber();
 
@@ -65,7 +66,6 @@ public class NewTransferHandler {
 			log.info("Transfering money to an external bankaccount");
 			handleExternalTransfer(rekeningNummer, tegenRekeningNummer, amount, typeOfMutatie, transferNumber);
 		}
-		return true;
 	}
 
 	/**
@@ -99,9 +99,8 @@ public class NewTransferHandler {
 	 * @param typeOfMutatie indicate if you want to add or remove money from the rekeningNummer
 	 * @param transferNumber the transferNumber of this transaction
 	 */
-	private void handleInternalTransfer(String rekeningnummer, String tegenRekeningNummer, BigDecimal amount, TypeOfMutatie typeOfMutatie, String transferNumber){
+	private void handleInternalTransfer(String rekeningnummer, String tegenRekeningNummer, BigDecimal amount, TypeOfMutatie typeOfMutatie, String transferNumber) throws TransferIllegalException {
 		log.info("Since this is an internal transaction, transfer money synchronously");
-		boolean transferSuccessful = incommingTransferHandler.handleIncomingTransfer(transferNumber, tegenRekeningNummer, rekeningnummer, amount, typeOfMutatie.inverted());
 
 		TransferEvent transferEvent = new TransferEvent();
 
@@ -111,12 +110,17 @@ public class NewTransferHandler {
 		transferEvent.setAmount(amount);
 		transferEvent.setTypeOfMutatie(typeOfMutatie);
 
-		if(transferSuccessful){
+		try{
+			incommingTransferHandler.handleIncomingTransfer(transferNumber, tegenRekeningNummer, rekeningnummer, amount, typeOfMutatie.inverted());
+
 			transferEvent.setTransferEventType(TransferEventType.COMPLETED);
-		}else{
+			publishEventClient.registerNewTransferEvent(transferEvent);
+		}catch(TransferIllegalException e){
 			transferEvent.setTransferEventType(TransferEventType.CANCELED);
+			publishEventClient.registerNewTransferEvent(transferEvent);
+
+			throw new TransferIllegalException("The tegenrekening has rejected the transfer");
 		}
-		publishEventClient.registerNewTransferEvent(transferEvent);
 	}
 
 	/**

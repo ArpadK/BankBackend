@@ -1,5 +1,6 @@
 package arpad.bank.bankbackend.dbmodel;
 
+import arpad.bank.bankbackend.exceptions.TransferIllegalException;
 import arpad.bank.bankbackend.repository.RekeningRepository;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,50 +20,39 @@ public class SpaarRekening extends Rekening{
 	 * @param amount the amount you want to transfer
 	 * @param typeOfMutatie specify if you are depositing or withdrawing from this account.
 	 * @param rekeningRepository an instance of the rekeningRepository
-	 * @return a boolean indicating if the transfer is legal.
 	 */
 	@Override
-	public boolean checkIfTransferIsLegal(boolean internalTransfer, String tegenRekeningNummer, BigDecimal amount, TypeOfMutatie typeOfMutatie, RekeningRepository rekeningRepository) {
+	public void checkIfTransferIsLegal(boolean internalTransfer, String tegenRekeningNummer, BigDecimal amount, TypeOfMutatie typeOfMutatie, RekeningRepository rekeningRepository) throws TransferIllegalException {
 		log.info("Checking if transfer is legal on SpraakRekening");
-		if(
-				checkSaldo(amount, typeOfMutatie) &&
-				checkIsOwnTegenRekening(tegenRekeningNummer, rekeningRepository)
-		){
-			log.info("Transfer is legal");
-			return true;
-		}else{
-			return false;
-		}
+		checkSaldo(amount, typeOfMutatie);
+		checkIsOwnTegenRekening(tegenRekeningNummer, rekeningRepository);
+		log.info("Transfer is legal");
 	}
 
 	/**
 	 * Checks if the transfer is to a tegenRekening That is also owned by the same klant. You can't wire money from a spaarRekening to an other klants rekening
 	 * @param tegenRekeningNummer The number of the tegenRekening
 	 * @param rekeningRepository An instance of the RekeningRepository
-	 * @return A boolean indicating if the transfer is leagal.
 	 */
-	private boolean checkIsOwnTegenRekening(String tegenRekeningNummer, RekeningRepository rekeningRepository){
+	private void checkIsOwnTegenRekening(String tegenRekeningNummer, RekeningRepository rekeningRepository) throws TransferIllegalException {
 		boolean isOwnTegenRekening = !rekeningRepository.getAllRekeningenFromKlantAndRekeningNummer(this.klant, tegenRekeningNummer).isEmpty();
 		if(!isOwnTegenRekening){
 			log.info("transfer is illegal: it is not allowed to transfer money from/to a rekening that is now yours from/to a renteRekening");
-			return false;
+			throw new TransferIllegalException("Can't transfer money from a Spaarrekening to a rekening that is not owned by the same klant");
 		}
-		return true;
 	}
 
 	/**
 	 * Checks if the saldo would be below 0 after the transfer. This is not allowed on a SpaarRekening.
 	 * @param amount The amount that should be transferred
 	 * @param typeOfMutatie The type of mutation
-	 * @return A boolean indicating if the transfer is legal
 	 */
-	private boolean checkSaldo(BigDecimal amount, TypeOfMutatie typeOfMutatie){
+	private void checkSaldo(BigDecimal amount, TypeOfMutatie typeOfMutatie) throws TransferIllegalException {
 		if(typeOfMutatie == TypeOfMutatie.AF) {
 			if (saldo.compareTo(amount) < 0) {
 				log.info("Transfer is illegal: transfer would make the saldo of this Renterekeing rekening go lower then 0");
-				return false;
+				throw new TransferIllegalException("Saldo can't be lower then 0 on a Spaarrekening");
 			}
 		}
-		return true;
 	}
 }

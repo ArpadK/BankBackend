@@ -1,7 +1,9 @@
 package arpad.bank.bankbackend.controllers;
 
 import arpad.bank.bankbackend.controllers.apiDTOs.TransferRequest;
+import arpad.bank.bankbackend.controllers.apiDTOs.TransferResponse;
 import arpad.bank.bankbackend.dbmodel.TypeOfMutatie;
+import arpad.bank.bankbackend.exceptions.TransferIllegalException;
 import arpad.bank.bankbackend.handlers.NewTransferHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,17 +21,21 @@ public class TransferController {
 	}
 
 	@PostMapping("/newTransfer")
-	public String newTransfer(@RequestBody TransferRequest transferRequest) {
+	public TransferResponse newTransfer(@RequestBody TransferRequest transferRequest) {
 		log.info("Received transfer request from " + transferRequest.getFromRekeningNummer() + " to " + transferRequest.getToRekeningNummer());
 		// TODO: Input validation
 		// TODO: Check if fromRekening is Owned by signed in user
-		boolean transferSuccessful = newTransferHandler.handleNewTransfer(transferRequest.getFromRekeningNummer(), transferRequest.getToRekeningNummer(), transferRequest.getAmount(), TypeOfMutatie.AF);
-		// TODO: Return Succes or Failure
 
-		if(transferSuccessful){
-			return "The transfer was successfully submitted";
-		}else{
-			return "Could not transfer the money. Please contact your bank";
+		TransferResponse transferResponse = new TransferResponse();
+
+		try {
+			newTransferHandler.handleNewTransfer(transferRequest.getFromRekeningNummer(), transferRequest.getToRekeningNummer(), transferRequest.getAmount(), TypeOfMutatie.AF);
+		} catch (TransferIllegalException e) {
+			transferResponse.setTransferSuccessful(false);
+			transferResponse.setTransferNotSuccessfulReason(e.getMessage());
+			return transferResponse;
 		}
+		transferResponse.setTransferSuccessful(true);
+		return transferResponse;
 	}
 }

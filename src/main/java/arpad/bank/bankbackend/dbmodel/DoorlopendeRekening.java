@@ -1,5 +1,6 @@
 package arpad.bank.bankbackend.dbmodel;
 
+import arpad.bank.bankbackend.exceptions.TransferIllegalException;
 import arpad.bank.bankbackend.repository.RekeningRepository;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,43 +20,34 @@ public class DoorlopendeRekening extends Rekening{
 	 * @param amount the amount you want to transfer
 	 * @param typeOfMutatie specify if you are depositing or withdrawing from this account.
 	 * @param rekeningRepository an instance of the rekeningRepository
-	 * @return a boolean indicating if the transfer is legal.
 	 */
 	@Override
-	public boolean checkIfTransferIsLegal(boolean internalTransfer, String tegenRekeningNummer, BigDecimal amount, TypeOfMutatie typeOfMutatie, RekeningRepository rekeningRepository) {
+	public void checkIfTransferIsLegal(boolean internalTransfer, String tegenRekeningNummer, BigDecimal amount, TypeOfMutatie typeOfMutatie, RekeningRepository rekeningRepository) throws TransferIllegalException {
 		log.info("Checking if transfer is legal on DoorlopendeRekening");
-		if(
-			saldoCheck(amount, typeOfMutatie)
-		){
-			log.info("Transfer is legal");
-			return true;
-		}else{
-			return false;
-		}
+		saldoCheck(amount, typeOfMutatie);
+		log.info("Transfer is Legal");
 	}
 
 	/**
 	 * Checks if the saldo would be below 0 after the transfer for a Persenal DoolopendeRekening or below 5000 for a Zakelijke DoorlopendeRekening.
 	 * @param amount The amount that should be transferred
 	 * @param typeOfMutatie The type of mutation
-	 * @return A boolean indicating if the transfer is legal
 	 */
-	private boolean saldoCheck(BigDecimal amount, TypeOfMutatie typeOfMutatie){
+	private void saldoCheck(BigDecimal amount, TypeOfMutatie typeOfMutatie) throws TransferIllegalException {
 		if(typeOfMutatie == TypeOfMutatie.AF) {
 			if (klant instanceof Particulier) {
 				if (saldo.compareTo(amount) < 0) {
 					log.info("Transfer is illegal: transfer would make the saldo of this persoonlijke rekening go lower then 0");
-					return false;
+					throw new TransferIllegalException("Saldo can't be lower then 0 on a Persoonlijke rekening");
 				}
 			}
 			if (klant instanceof Zakelijk){
 				BigDecimal minValueZakelijk = new BigDecimal(-5000);
 				if (saldo.subtract(amount).compareTo(minValueZakelijk) < 0) {
 					log.info("Transfer is illegal: transfer would make the saldo of this zakelijke rekening go lower then 5000");
-					return false;
+					throw new TransferIllegalException("Saldo can't be lower then 5000 on a Zakelijke rekening");
 				}
 			}
 		}
-		return true;
 	}
 }
