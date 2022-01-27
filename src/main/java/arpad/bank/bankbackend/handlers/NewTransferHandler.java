@@ -2,6 +2,7 @@ package arpad.bank.bankbackend.handlers;
 
 import arpad.bank.bankbackend.dbmodel.Rekening;
 import arpad.bank.bankbackend.dbmodel.TypeOfMutatie;
+import arpad.bank.bankbackend.exceptions.ExternalCommunicationException;
 import arpad.bank.bankbackend.exceptions.TransferIllegalException;
 import arpad.bank.bankbackend.helpers.RekeningNummerHelper;
 import arpad.bank.bankbackend.integration.eventstore.PublishEventClient;
@@ -27,19 +28,16 @@ public class NewTransferHandler {
 	private IncommingTransferHandler incommingTransferHandler;
 	private PublishEventClient publishEventClient;
 
-
 	/**
-	 * start a new transfer
+	 * Start a new transfer
 	 * @param rekeningNummer the rekeningnummer you want to transfer from/to
 	 * @param tegenRekeningNummer the rekeningnummer you want to transfer to/from
 	 * @param amount the amount you want to transfer
 	 * @param typeOfMutatie indicate if you want to add or remove money from the rekeningNummer
-	 * @return a boolean indicating if the transaction was successful
 	 */
-	public void handleNewTransfer(String rekeningNummer, String tegenRekeningNummer, BigDecimal amount, TypeOfMutatie typeOfMutatie) throws TransferIllegalException {
-		boolean isInternalTransaction = rekeningNummerHelper.isBankRekeningInternalRekening(tegenRekeningNummer);
-
+	public void handleNewTransfer(String rekeningNummer, String tegenRekeningNummer, BigDecimal amount, TypeOfMutatie typeOfMutatie) throws TransferIllegalException, ExternalCommunicationException {
 		// get the Rekening that is starting this transfer from the database
+		// TODO: Check if bank account exists
 		Rekening rekening = rekeningRepository.getRekeningByRekeningNummer(rekeningNummer);
 
 		// check if Tranfer is legal
@@ -59,6 +57,8 @@ public class NewTransferHandler {
 		publishEventClient.registerNewTransferEvent(transferEvent);
 
 		log.info("Checking if it is an Internal transfer");
+		boolean isInternalTransaction = rekeningNummerHelper.isBankRekeningInternalRekening(tegenRekeningNummer);
+
 		if(isInternalTransaction){
 			log.info("Transfering money to an internal bankaccount");
 			handleInternalTransfer(rekeningNummer, tegenRekeningNummer, amount, typeOfMutatie, transferNumber);
@@ -69,7 +69,7 @@ public class NewTransferHandler {
 	}
 
 	/**
-	 * a transaction to another bank is handled asynchronously. This methods handles the responce from the other bank
+	 * a transaction to another bank is handled asynchronously. This methods handles the response from the other bank
 	 * @param transferNumber The transferNumber
 	 * @param transferSuccessful Indicate if the transaction was successful
 	 */
@@ -119,6 +119,7 @@ public class NewTransferHandler {
 			transferEvent.setTransferEventType(TransferEventType.CANCELED);
 			publishEventClient.registerNewTransferEvent(transferEvent);
 
+			// Create a new Exception in order to not expose information of another klant's bankrekening
 			throw new TransferIllegalException("The tegenrekening has rejected the transfer");
 		}
 	}
@@ -126,9 +127,8 @@ public class NewTransferHandler {
 	/**
 	 * Handle an external transaction. This will be done asynchronously.
 	 * @param transferNumber The transferNumber of this transaction
-	 * @return A boolean indicating if the transfer was successfully posted on the interBank exchange
 	 */
-	private boolean handleExternalTransfer(String rekeningnummer, String tegenRekeningNummer, BigDecimal amount, TypeOfMutatie typeOfMutatie, String transferNumber){
+	private void handleExternalTransfer(String rekeningnummer, String tegenRekeningNummer, BigDecimal amount, TypeOfMutatie typeOfMutatie, String transferNumber) throws ExternalCommunicationException {
 		log.info("Since this is an external transaction, transfer money asynchronously");
 		TransferRabbitMQClient transferRabbitMQClient = new TransferRabbitMQClient();
 		TransferRequest transferRequest = new TransferRequest();
@@ -148,8 +148,7 @@ public class NewTransferHandler {
 			);
 
 			publishEventClient.registerNewTransferEvent(transferEvent);
+			throw new ExternalCommunicationException("An error occurred when trying to post a transfer request on the external bank exchange");
 		}
-
-		return transactionSuccessfullyPostedOnExchange;
 	}
 }

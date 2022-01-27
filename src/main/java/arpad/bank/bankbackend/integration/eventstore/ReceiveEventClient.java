@@ -24,10 +24,11 @@ public class ReceiveEventClient {
 	@Transactional
 	@RabbitListener(queues = "${bank.transfer.queue.name}")
 	public void receiveNewTransferEvent(TransferEvent transferEvent){
-		log.info("TransferCreatedEvent received. Updating model");
+		log.info("TransferEvent received. Updating model");
 		try{
 			transferEventHandler.handleNewTransferEvent(transferEvent);
 		}catch(Exception e){
+			//TODO: implement dead letter queue
 			log.error("could not process event", e);
 		}
 	}

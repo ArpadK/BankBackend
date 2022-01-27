@@ -36,7 +36,6 @@ public class RenteRekening extends Rekening{
 	 */
 	private void checkIncomingTransfer(TypeOfMutatie typeOfMutatie) throws TransferIllegalException {
 		if (typeOfMutatie == TypeOfMutatie.BIJ) {
-			log.info("transfer is illegal: it's not allowed to transfer money to a renteRekening");
 			throw new TransferIllegalException("It is not allowed to transfer money to a renterekening");
 		}
 	}
@@ -49,7 +48,6 @@ public class RenteRekening extends Rekening{
 	private void checkSaldo(BigDecimal amount, TypeOfMutatie typeOfMutatie) throws TransferIllegalException {
 		if(typeOfMutatie == TypeOfMutatie.AF) {
 			if (saldo.compareTo(amount) < 0) {
-				log.info("Transfer is illegal: transfer would make the saldo of this Renterekeing rekening go lower then 0");
 				throw new TransferIllegalException("Saldo can't be lower then 0 on a Rente rekening");
 			}
 		}
@@ -63,7 +61,6 @@ public class RenteRekening extends Rekening{
 	private void checkIsOwnTegenRekening(String tegenRekeningNummer, RekeningRepository rekeningRepository) throws TransferIllegalException {
 		boolean isOwnTegenRekening = !rekeningRepository.getAllRekeningenFromKlantAndRekeningNummer(this.klant, tegenRekeningNummer).isEmpty();
 		if(!isOwnTegenRekening){
-			log.info("transfer is illegal: it is not allowed to transfer money from/to a rekening that is now yours from/to a renteRekening");
 			throw new TransferIllegalException("Can't transfer money from a Renterekening to a rekening that is not owned by the same klant");
 		}
 	}

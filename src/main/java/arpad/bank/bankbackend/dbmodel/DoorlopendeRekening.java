@@ -37,14 +37,12 @@ public class DoorlopendeRekening extends Rekening{
 		if(typeOfMutatie == TypeOfMutatie.AF) {
 			if (klant instanceof Particulier) {
 				if (saldo.compareTo(amount) < 0) {
-					log.info("Transfer is illegal: transfer would make the saldo of this persoonlijke rekening go lower then 0");
 					throw new TransferIllegalException("Saldo can't be lower then 0 on a Persoonlijke rekening");
 				}
 			}
 			if (klant instanceof Zakelijk){
 				BigDecimal minValueZakelijk = new BigDecimal(-5000);
 				if (saldo.subtract(amount).compareTo(minValueZakelijk) < 0) {
-					log.info("Transfer is illegal: transfer would make the saldo of this zakelijke rekening go lower then 5000");
 					throw new TransferIllegalException("Saldo can't be lower then 5000 on a Zakelijke rekening");
 				}
 			}

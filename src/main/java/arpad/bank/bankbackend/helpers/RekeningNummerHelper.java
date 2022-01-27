@@ -32,10 +32,9 @@ public class RekeningNummerHelper {
 	}
 
 	/**
-	 * Map the RekeningMutatieId to the external transferNumber
+	 * Generate a new TransferNumber
 	 * @return The transferNumber of the RekeningMutatieId
 	 */
-	//TODO: add bankname to the transferNumber
 	public String generateNewTransferNumber(){
 		return bankname + "_" + UUID.randomUUID().toString();
 	}

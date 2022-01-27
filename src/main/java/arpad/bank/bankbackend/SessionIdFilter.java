@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component;
  *
  * @author pismy
  */
-//TODO: temperory using this implementation. This needs to be adapted to for example work without a serverside session once the login process is implemented
+//TODO: Create a non server side session base tracing ID that also works with the created events
 @Component
 @Order(1)
 public class SessionIdFilter implements Filter, HttpSessionListener {

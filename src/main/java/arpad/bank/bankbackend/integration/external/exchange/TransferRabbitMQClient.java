@@ -9,6 +9,6 @@ public class TransferRabbitMQClient {
 
 	public boolean publishNewTransferOnExchange(TransferRequest transferRequest){
 		log.warn("No rabbit connection setup yet, message will not be send to other bank!");
-		return true;
+		return false;
 	}
 }

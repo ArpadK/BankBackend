@@ -18,7 +18,10 @@ public class TransferEventHandler {
 	private RekeningRepository rekeningRepository;
 	private RekeningMutatieRepository rekeningMutatieRepository;
 
-
+	/**
+	 * Register the contents of a transferEvent to the database.
+	 * @param transferEvent
+	 */
 	public void handleNewTransferEvent(TransferEvent transferEvent){
 		switch (transferEvent.getTransferEventType()){
 			case CREATED: createTransaction(transferEvent); break;
@@ -27,7 +30,12 @@ public class TransferEventHandler {
 		}
 	}
 
+	/**
+	 * Storing a new transfer in the database after a transfer event.
+	 * @param transferEvent Of new transfer
+	 */
 	private void createTransaction(TransferEvent transferEvent){
+		log.info("Storing new Transfer {"+ transferEvent.getTransferNumber() +"} in the database");
 		Rekening rekening = rekeningRepository.getRekeningByRekeningNummer(transferEvent.getRekeningNummer());
 
 		rekening.updateSaldo(transferEvent.getTypeOfMutatie(), transferEvent.getAmount());
@@ -41,10 +49,11 @@ public class TransferEventHandler {
 	}
 
 	/**
-	 * After the money was unsuccessfully transfered to of from the tegenrekening. Update the rekeningMutatie from pending to Canceled
-	 * @param transferEvent Of wich the transaction should be rollbacked
+	 * After the money was unsuccessfully transferred to of from the tegenrekening. Update the rekeningMutatie from pending to Canceled
+	 * @param transferEvent Of which the transaction should be rollbacked
 	 */
 	private void rollbackTransaction(TransferEvent transferEvent){
+		log.info("Rolling back Transfer {"+ transferEvent.getTransferNumber() +"} and storing it in the database");
 		RekeningMutatie rekeningMutatie = rekeningMutatieRepository.getRekeningMutatieByTransferNumberAndRekeningNummer(transferEvent.getTransferNumber(), transferEvent.getRekeningNummer());
 
 		Rekening rekening = rekeningMutatie.getRekening();
@@ -56,11 +65,12 @@ public class TransferEventHandler {
 
 	/**
 	 * After the money was successfully transfered to of from the tegenrekening. Update the rekeningMutatie from pending to Completed
-	 * @param transferEvent Of wich the transaction should be finalized
+	 * @param transferEvent Of which the transaction should be finalized
 	 */
 	private void finalizeTransaction(TransferEvent transferEvent){
+		log.info("Finalize Transfer {"+ transferEvent.getTransferNumber() +"} and storing it in the database");
 		RekeningMutatie rekeningMutatie = rekeningMutatieRepository.getRekeningMutatieByTransferNumberAndRekeningNummer(transferEvent.getTransferNumber(), transferEvent.getRekeningNummer());
-		// subtract amount from saldo and save to db
+
 		rekeningMutatie.finalizeMutation();
 		rekeningMutatieRepository.save(rekeningMutatie);
 	}
